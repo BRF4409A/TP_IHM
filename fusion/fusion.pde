@@ -30,15 +30,19 @@ class CommandeMultimodale {
     if (!action.equals("none")) {
       // FUSION RÉUSSIE POUR CRÉER
       if (action.equals("CREATE") && !forme.equals("none") && x != -1 && y != -1) {
+        
         try {
-          // On envoie l'ordre précis à la Palette
+          // LA LIGNE CRUCIALE : Envoi du message réel sur le bus Ivy pour la Palette
           String ordre = "Palette CreerObjet type=" + forme + " x=" + x + " y=" + y + " couleur=" + couleur;
           bus.sendMsg(ordre);
-          println(">>> ORDRE ENVOYÉ : " + ordre);
+          
+          // Nouveau log pour confirmer l'envoi réseau
+          println(">>> MESSAGE IVY ENVOYÉ : " + ordre);
         } catch (IvyException e) {
           println("Erreur d'envoi Ivy : " + e.getMessage());
         }
-        reinitialiser();
+        
+        reinitialiser(); // On remet à zéro après exécution
       }
     }
   }
