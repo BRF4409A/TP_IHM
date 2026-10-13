@@ -50,7 +50,8 @@ void setup() {
         else if (typeForme.equals("CIRCLE")) nouvelleForme = new Cercle(p);
         else if (typeForme.equals("TRIANGLE")) nouvelleForme = new Triangle(p);
         else if (typeForme.equals("DIAMOND")) nouvelleForme = new Losange(p);
-        else if (typeForme.equals("SQUARE")) nouvelleForme = new Rectangle(p); 
+        else if (typeForme.equals("SQUARE")) nouvelleForme = new Carre(p);
+        else if (typeForme.equals("ETOILE")) nouvelleForme = new Etoile(p);
         
         if (nouvelleForme != null) {
           applyColorToForme(nouvelleForme, couleurForme);
