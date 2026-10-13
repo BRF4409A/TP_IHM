@@ -151,7 +151,38 @@ void setup() {
       }
     });
 
-    // --- B. ÉCOUTE DES CLICS SOURIS ---
+    // --- B. ÉCOUTE DES GESTES (OneDollarIvy) ---
+    bus.bindMsg("^OneDollarIvy Template=([^ ]+) Confidence=(.*)", new IvyMessageListener() {
+      public void receive(IvyClient client, String[] args) {
+        String geste = args[0];
+        println("\n--- GESTE REÇU : " + geste + " ---");
+        
+        // Mapping du nom du modèle tracé vers les formes système
+        if (geste.equalsIgnoreCase("rectangle") || geste.equalsIgnoreCase("rect")) {
+            cmd.forme = "RECTANGLE";
+        } else if (geste.equalsIgnoreCase("circle") || geste.equalsIgnoreCase("cercle")) {
+            cmd.forme = "CIRCLE";
+        } else if (geste.equalsIgnoreCase("triangle")) {
+            cmd.forme = "TRIANGLE";
+        } else if (geste.equalsIgnoreCase("diamond") || geste.equalsIgnoreCase("losange")) {
+            cmd.forme = "DIAMOND";
+        } else if (geste.equalsIgnoreCase("square") || geste.equalsIgnoreCase("carre")) {
+            cmd.forme = "SQUARE";
+        }
+        
+        // Logique Magique (Partie Geste) : Si la voix a déjà dit "Créer" sans dire "Ici", 
+        // et qu'on vient de tracer la forme, on génère la position aléatoire.
+        if (cmd.action.equals("CREATE") && !cmd.positionRequise && cmd.x == -1) {
+             cmd.x = int(random(100, 700));
+             cmd.y = int(random(100, 500));
+             cmd.positionRequise = false;
+        }
+
+        cmd.verifierExecution(); // Tentative de fusion
+      }
+    });
+
+    // --- C. ÉCOUTE DES CLICS SOURIS ---
     bus.bindMsg("^Palette MouseClicked x=(.*) y=(.*)", new IvyMessageListener() {
       public void receive(IvyClient client, String[] args) {
         cmd.x = int(args[0]);
