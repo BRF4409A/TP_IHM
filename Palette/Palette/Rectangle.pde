@@ -1,40 +1,38 @@
-/*
- * Classe Rectangle
- */ 
- 
 public class Rectangle extends Forme {
   
-  int longueur;
+  int largeur;
+  int hauteur;
   
   public Rectangle(Point p) {
     super(p);
-    this.longueur=60;
+    this.largeur = 90;
+    this.hauteur = 50;
   }
    
   public void update() {
     fill(this.c);
-    square((int) this.origin.getX(),(int) this.origin.getY(),this.longueur);
+    // On utilise rect() au lieu de square()
+    rect((float) this.origin.getX(), (float) this.origin.getY(), this.largeur, this.hauteur);
   }  
   
   boolean isClicked(Point p) {
-    int x= (int) p.getX();
-    int y= (int) p.getY();
+    int x = (int) p.getX();
+    int y = (int) p.getY();
     int x0 = (int) this.origin.getX();
     int y0 = (int) this.origin.getY();
     
-    // vérifier que le rectangle est cliqué
-    if ((x>x0) && (x<x0+this.longueur) && (y>y0) && (y<y0+this.longueur))
-      return(true);
+    // Vérification avec la largeur et la hauteur
+    if ((x > x0) && (x < x0 + this.largeur) && (y > y0) && (y < y0 + this.hauteur))
+      return true;
     else  
-      return(false);
+      return false;
   }
   
-  // Calcul du périmètre du carré
   protected double perimetre() {
-    return(this.longueur*4);
+    return (this.largeur + this.hauteur) * 2;
   }
   
-  protected double aire(){
-    return(this.longueur*this.longueur);
+  protected double aire() {
+    return (this.largeur * this.hauteur);
   }
 }
