@@ -3,20 +3,19 @@ import fr.dgac.ivy.*;
 
 ArrayList<Forme> formes;
 FSM mae;
-int indice_forme;
+int indice_forme_glissee = -1; // Pour le drag and drop
 PImage sketch_icon;
 
 Ivy bus;
 
 void setup() {
-  size(800,600);
+  size(800, 600);
   surface.setResizable(true);
   surface.setTitle("Palette multimodale");
   
-  formes = new ArrayList();
+  formes = new ArrayList<Forme>();
   noStroke();
   mae = FSM.INITIAL;
-  indice_forme = -1;
   
   try {
     bus = new Ivy("Palette", "Palette graphique prête", null);
@@ -39,6 +38,7 @@ void setup() {
         else if (typeForme.equals("CIRCLE")) nouvelleForme = new Cercle(p);
         else if (typeForme.equals("TRIANGLE")) nouvelleForme = new Triangle(p);
         else if (typeForme.equals("DIAMOND")) nouvelleForme = new Losange(p);
+        else if (typeForme.equals("SQUARE")) nouvelleForme = new Rectangle(p); // Carré traité comme rectangle pour l'instant
         
         if (nouvelleForme != null) {
           if (couleurForme.equals("RED")) nouvelleForme.setColor(color(255, 0, 0));
@@ -63,7 +63,7 @@ void draw() {
   if (mae == FSM.INITIAL) {
     background(255);
     fill(0);
-    text("Attente de la fusion multimodale (Voix + Clic)...", 50,50);
+    text("Attente de la fusion multimodale (Voix + Clic)...", 50, 50);
   } else {
     affiche();
   }
@@ -71,49 +71,56 @@ void draw() {
 
 void affiche() {
   background(255);
-  for (int i=0;i<formes.size();i++) {
+  for (int i = 0; i < formes.size(); i++) {
     (formes.get(i)).update();
   }
 }
 
 void mousePressed() { 
-  Point p = new Point(mouseX,mouseY);
+  Point p = new Point(mouseX, mouseY);
   
+  // 1. Envoyer le clic au Moteur de Fusion (au cas où il attend une position pour créer une forme)
   try {
     if (bus != null) {
       bus.sendMsg("Palette MouseClicked x=" + mouseX + " y=" + mouseY);
-      println("--- CLIC ENVOYÉ : X=" + mouseX + " Y=" + mouseY);
+      println("--- CLIC ENVOYÉ AU BUS : X=" + mouseX + " Y=" + mouseY);
     }
   } catch (IvyException e) {}
   
-  switch (mae) {
-    case AFFICHER_FORMES:
-      for (int i=0;i<formes.size();i++) { 
-        if ((formes.get(i)).isClicked(p)) {
-          (formes.get(i)).setColor(color(random(0,255),random(0,255),random(0,255)));
-        }
-      } 
-      break;
-      
-   case DEPLACER_FORMES_SELECTION:
-     for (int i=0;i<formes.size();i++) {      
-        if ((formes.get(i)).isClicked(p)) {
-          indice_forme = i;
-          mae = FSM.DEPLACER_FORMES_DESTINATION;
-        }         
-     }
-     if (indice_forme == -1) mae= FSM.AFFICHER_FORMES;
-     break;
-     
-   case DEPLACER_FORMES_DESTINATION:
-     if (indice_forme !=-1) {
-       (formes.get(indice_forme)).setLocation(new Point(mouseX,mouseY));
-     }
-     indice_forme=-1;
-     mae=FSM.AFFICHER_FORMES;
-     break;
-     
-    default:
-      break;
+  // 2. Vérifier si on a cliqué sur une forme existante pour la glisser
+  indice_forme_glissee = -1; // On réinitialise à chaque clic
+  
+  // On parcourt à l'envers pour attraper la forme qui est dessinée au-dessus des autres
+  for (int i = formes.size() - 1; i >= 0; i--) { 
+    if ((formes.get(i)).isClicked(p)) {
+      indice_forme_glissee = i;
+      mae = FSM.DEPLACER_FORMES_DESTINATION;
+      break; // On a trouvé notre forme, on arrête de chercher
+    }
+  }
+  
+  // Si on clique dans le vide (pas sur une forme)
+  if (indice_forme_glissee == -1 && mae == FSM.AFFICHER_FORMES) {
+    // Optionnel : tu pourrais garder ici la logique de changer la couleur aléatoirement 
+    // sur un simple clic, mais le drag and drop prend généralement le dessus.
+  }
+}
+
+// Fonction appelée en continu tant que la souris bouge avec le clic maintenu enfoncé
+void mouseDragged() {
+  // Si on a bien attrapé une forme
+  if (indice_forme_glissee != -1) {
+    // On met à jour ses coordonnées en temps réel avec la position de la souris
+    (formes.get(indice_forme_glissee)).setLocation(new Point(mouseX, mouseY));
+  }
+}
+
+// Fonction appelée quand on relâche le clic de la souris
+void mouseReleased() {
+  if (indice_forme_glissee != -1) {
+    // La forme est lâchée, on réinitialise l'indice et l'état
+    indice_forme_glissee = -1;
+    mae = FSM.AFFICHER_FORMES;
+    println("Forme relâchée !");
   }
 }
