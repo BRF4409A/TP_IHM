@@ -103,47 +103,44 @@ Ivy bus;
 CommandeMultimodale cmd;
 
 void setup() {
-  size(650, 500); // Agrandie pour voir la vibration !
+  size(650, 500); 
   cmd = new CommandeMultimodale();
   
   try {
     bus = new Ivy("MoteurFusion", "Moteur prêt", null);
     bus.start("127.255.255.255:2010"); 
     
-    // --- A. ÉCOUTE DE LA VOIX ---
-    bus.bindMsg("^sra5 Text=(.*) Confidence=(.*)", new IvyMessageListener() {
+    // --- A. ÉCOUTE DE LA VOIX (SÉMANTIQUE) ---
+    // Cette regex capture : action=... where=... form=... color=... localisation=...
+    bus.bindMsg("^sra5 Parsed=\"?action=([^ ]+) where=([^ ]+) form=([^ ]+) color=([^ ]+) localisation=([^ \"]+)", new IvyMessageListener() {
       public void receive(IvyClient client, String[] args) {
-        String phrase = args[0].toLowerCase().trim();
-        println("\n--- VOIX REÇUE : " + phrase + " ---");
+        String actionVocale = args[0];
+        String whereVocale  = args[1]; // "THIS" ou "none"
+        String formVocale   = args[2];
+        String colorVocale  = args[3];
+        String locVocale    = args[4]; // "THERE" ou "none"
         
-        if (phrase.contains("créer") || phrase.contains("dessiner") || phrase.contains("tracer") || phrase.contains("ajout")) cmd.action = "CREATE";
-        if (phrase.contains("supprimer") || phrase.contains("effacer")) cmd.action = "DELETE";
-        if (phrase.contains("déplacer") || phrase.contains("bouger")) cmd.action = "MOVE";
+        println("\n--- VOIX REÇUE (Sémantique) ---");
+        println("Action:" + actionVocale + " | Forme:" + formVocale + " | Couleur:" + colorVocale + " | Loc:" + locVocale);
         
-        if (phrase.contains("rectangle")) cmd.forme = "RECTANGLE";
-        if (phrase.contains("cercle")) cmd.forme = "CIRCLE";
-        if (phrase.contains("triangle")) cmd.forme = "TRIANGLE";
-        if (phrase.contains("losange")) cmd.forme = "DIAMOND";
-        if (phrase.contains("carré") || phrase.contains("carre")) cmd.forme = "SQUARE";
+        // Transfert des données sémantiques vers l'automate
+        if (!actionVocale.equals("none")) cmd.action = actionVocale;
+        if (!formVocale.equals("none")) cmd.forme = formVocale;
+        if (!colorVocale.equals("none")) cmd.couleur = colorVocale;
         
-        if (phrase.contains("rouge")) cmd.couleur = "RED";
-        if (phrase.contains("vert")) cmd.couleur = "GREEN";
-        if (phrase.contains("bleu")) cmd.couleur = "BLUE";
-        if (phrase.contains("jaune")) cmd.couleur = "YELLOW";
-        if (phrase.contains("noir")) cmd.couleur = "DARK";
-        if (phrase.contains("orange")) cmd.couleur = "ORANGE";
-        if (phrase.contains("violet")) cmd.couleur = "PURPLE";
-        
-        // LA LOGIQUE MAGIQUE ICI :
-        if (phrase.contains("ici") || phrase.contains("là") || phrase.contains("endroit")) {
+        // LA LOGIQUE MAGIQUE ADAPTÉE :
+        // Si l'utilisateur a dit "ici", "là", "à cet endroit" (THERE) ou "ce/cette" (THIS)
+        if (locVocale.equals("THERE") || whereVocale.equals("THIS")) {
           cmd.positionRequise = true;
           cmd.etatCourant = cmd.ETAT_ATTENTE_CLIC;
-        } else if (cmd.action.equals("CREATE") && !cmd.forme.equals("none")) {
-          // L'utilisateur n'a pas dit "ici", on génère aléatoirement !
+        } 
+        else if (cmd.action.equals("CREATE") && !cmd.forme.equals("none")) {
+          // L'utilisateur n'a PAS dit "ici", on génère aléatoirement !
           cmd.x = int(random(100, 700));
           cmd.y = int(random(100, 500));
           cmd.positionRequise = false;
-        } else if (!cmd.action.equals("none")) {
+        } 
+        else if (!cmd.action.equals("none")) {
           cmd.etatCourant = cmd.ETAT_ATTENTE_INFO;
         }
         
